@@ -202,7 +202,10 @@ void Planning::planSimple(){
   space->addDimension(0.0, 800.0);
   maxWidth_ = 800-1;
   maxHeight_ = 800-1;
+  // ss_ = make_shared_ptr(ss_);
+  std::shared_ptr<og::SimpleSetup> std_ss_;
   ss_ = std::make_shared<og::SimpleSetup>(space);
+
   ss_->setStateValidityChecker([this](const ob::State *state) {return isStateValid(state);});
   space->setup();
   ss_->getSpaceInformation()->setStateValidityCheckingResolution(1.0 / space->getMaximumExtent());

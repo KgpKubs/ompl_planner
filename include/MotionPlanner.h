@@ -11,7 +11,10 @@
 #include <ompl/geometric/planners/rrt/TRRT.h>
 #include <ompl/geometric/planners/rrt/pRRT.h>
 #include <ompl/geometric/planners/est/EST.h>
-
+#include <boost/bind.hpp>
+#include "ompl/base/StateSpace.h"
+#include "ompl/base/spaces/RealVectorStateSpace.h"
+#include "ompl/base/spaces/SO2StateSpace.h"
 
 #include <ompl/base/spaces/SE2StateSpace.h>
 #include <ompl/base/PlannerData.h>
@@ -30,6 +33,33 @@ namespace ob = ompl::base;
 namespace og = ompl::geometric;
 
 using namespace std;
+using namespace cv;
+
+template<typename T>
+boost::shared_ptr<T> make_shared_ptr(std::shared_ptr<T>& ptr)
+{
+    return boost::shared_ptr<T>(ptr.get(), [ptr](T*) mutable {ptr.reset();});
+}
+
+template<typename T>
+std::shared_ptr<T> make_shared_ptr(boost::shared_ptr<T>& ptr)
+{
+    return std::shared_ptr<T>(ptr.get(), [ptr](T*) mutable {ptr.reset();});
+}
+
+typedef struct 
+{
+  double x;
+  double y;
+}point;
+
+typedef struct 
+{
+  double stepSize;
+  double maxIteration;
+  double biasParam;
+  int planner_selector;
+}gui_msg;
 
 typedef struct {
   double xrange[2];
@@ -44,14 +74,19 @@ typedef struct
 
 class Planning{
   public:
-    Planning(std::vector<pos> &v,int n);
-    void init(std::vector<pos> &v,int n);
+    Planning(std::vector<pos> &v,int n, gui_msg gui_msgs);
+    void init(std::vector<pos> &v,int n, gui_msg gui_msgs);
     void CreateCircle();
     //void PlannerSelector();
-    bool isStateValid(const ob::State *state);
+    bool isStateValid(const ob::State *state) const;
     void planWithSimpleSetup();
-    void drawPath(std::string fileName);
+    void drawPath();
     void output();
+    void planSimple();
+    bool plan(unsigned int start_row, unsigned int start_col, unsigned int goal_row, unsigned int goal_col);
+    vector<point> recordSolution();
+    bool isStateValid1(const ob::State *state);
+    void drw();
 
   private:
     double* xc;
@@ -73,7 +108,12 @@ class Planning{
     double xRight;
     double yTop;
     double yBottom;
-
     int selector;
+
+
+    int maxWidth_;
+    int maxHeight_;
+    og::SimpleSetupPtr ss_;
+
 };
 #endif
