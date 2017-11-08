@@ -4,6 +4,8 @@
 #include "ompl/base/spaces/RealVectorStateSpace.h"
 #include "ompl/base/spaces/SO2StateSpace.h"
 
+#include <boost/make_shared.hpp>
+
 #define radius 10
 
 using namespace cv;
@@ -197,14 +199,12 @@ bool Planning::isStateValid(const ob::State *state) const {
 
 
 void Planning::planSimple(){
-  auto space(std::make_shared<ob::RealVectorStateSpace>());
+  boost::shared_ptr<ob::RealVectorStateSpace> space(boost::make_shared<ob::RealVectorStateSpace>());
   space->addDimension(0.0, 800.0);
   space->addDimension(0.0, 800.0);
   maxWidth_ = 800-1;
   maxHeight_ = 800-1;
-  // ss_ = make_shared_ptr(ss_);
-  std::shared_ptr<og::SimpleSetup> std_ss_;
-  ss_ = std::make_shared<og::SimpleSetup>(space);
+  ss_ = boost::make_shared<og::SimpleSetup>(space);
 
   ss_->setStateValidityChecker([this](const ob::State *state) {return isStateValid(state);});
   space->setup();
