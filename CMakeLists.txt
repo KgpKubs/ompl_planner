@@ -10,6 +10,7 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   rospy
   std_msgs
+  krssg_ssl_msgs
 )
 find_package(OMPL REQUIRED)
 find_package(OpenCV REQUIRED)
