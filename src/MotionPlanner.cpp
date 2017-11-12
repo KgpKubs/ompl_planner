@@ -56,8 +56,8 @@ void Planning::init(vector<pos> &v,int n, gui_msg gui_msgs)
   //   printf("Circle %d : [x,y]--[%5.2lf, %5.2lf] radius--[%5.2lf]\n", i+1, xc[i], yc[i],30.0);
   // }
 
-  printf("\nStart [%5.2lf, %5.2lf]\n", xStart, yStart);
-  printf("End [%5.2lf, %5.2lf]\n\n", xGoal, yGoal);
+  // printf("\nStart [%5.2lf, %5.2lf]\n", xStart, yStart);
+  // printf("End [%5.2lf, %5.2lf]\n\n", xGoal, yGoal);
 
 }
 
@@ -97,7 +97,6 @@ bool Planning::plan(unsigned int start_row, unsigned int start_col, unsigned int
   for (int i = 0 ; i < 1 ; ++i){
     // if (ss_->getPlanner())
     //   ss_->getPlanner()->clear();
-    cout<<" selector = "<<selector<<endl;
         if(selector == 1){
         ob::PlannerPtr planner(new og::PRM(ss_->getSpaceInformation()));
         ss_->setPlanner(planner);
@@ -133,7 +132,7 @@ bool Planning::plan(unsigned int start_row, unsigned int start_col, unsigned int
     ss_->solve();
   }
   const std::size_t ns = ss_->getProblemDefinition()->getSolutionCount();
-  OMPL_INFORM("HEY! SHUBHAM --> Found %d solutions", (int)ns);
+  // OMPL_INFORM("HEY! SHUBHAM --> Found %d solutions", (int)ns);
   if (ss_->haveSolutionPath()){
     ss_->simplifySolution();
     og::PathGeometric &p = ss_->getSolutionPath();
@@ -163,7 +162,7 @@ vector<point> Planning::recordSolution(){
     s.y=h;
     vect1.push_back(s);
   }
-  cout<<" size of vect1 = "<<vect1.size()<<endl;
+  // cout<<" size of vect1 = "<<vect1.size()<<endl;
   return vect1;
 }
 
@@ -275,7 +274,7 @@ void Planning::planWithSimpleSetup()
     ss.setPlanner(planner);
   }
 
-  cout << "----------------" << endl;
+  // cout << "----------------" << endl;
 
   // Execute the planning algorithm
   ob::PlannerStatus solved = ss.solve(5);
@@ -287,8 +286,8 @@ void Planning::planWithSimpleSetup()
 
     // Simplify the solution
     ss.simplifySolution();
-    cout << "----------------" << endl;
-    cout << "Found solution:" << endl;
+    // cout << "----------------" << endl;
+    // cout << "Found solution:" << endl;
 
     //Print the solution path to a file
     std::ofstream ofs("path.dat");
@@ -296,20 +295,6 @@ void Planning::planWithSimpleSetup()
 
     og::PathGeometric &p = ss.getSolutionPath();
     p.interpolate();
-    //reals.clear();
-    /*for(std::size_t i = 0; i<p.getStateCount(); i++){
-      int x = min(-1.0,p.getState(i)->as<ob::RealVectorStateSpace::StateType>()->values[0]);
-      int y = min(-1.0,p.getState(i)->as<ob::RealVectorStateSpace::StateType>()->values[1]);
-
-    // int x = min(xRight, p.getState(i)->getX());
-    //int y = min(yBottom, p.getState(i)->getY());
-
-    //pair pos;
-    //pos.x = x, pos.y = y;
-    // cout<<p.getState(i)->as<ob::RealVectorStateSpace::StateType>()->values[0]<<endl;
-    //cout<<x<<"                      "<<y<<endl;
-    //reals.push_back(pos);
-    }*/
 
   }
   else
