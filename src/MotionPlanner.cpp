@@ -161,7 +161,9 @@ vector<point> Planning::recordSolution(){
     s.x=w;
     s.y=h;
     vect1.push_back(s);
+    cout<<s.x<<" "<<s.y<<" ";
   }
+  cout<<endl;
   // cout<<" size of vect1 = "<<vect1.size()<<endl;
   return vect1;
 }
