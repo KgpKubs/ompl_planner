@@ -1,5 +1,10 @@
 #ifndef _MOTION_PLANNER_H_
 #define _MOTION_PLANNER_H_
+
+#include "krssg_ssl_msgs/BeliefState.h"
+#include "krssg_ssl_msgs/planner_path.h"
+#include "krssg_ssl_msgs/point_2d.h"
+#include "krssg_ssl_msgs/point_SF.h"
 #include <ompl/geometric/SimpleSetup.h>
 
 #include <ompl/geometric/planners/prm/PRM.h>
@@ -20,23 +25,21 @@
 #include <ompl/base/PlannerData.h>
 #include <cmath>
 #include <iostream>
-#include <fstream>
 #include <ostream>
 #include <vector>
-
-#include <opencv2/core/core.hpp>
-#include <opencv2/highgui/highgui.hpp>
-#include <opencv2/opencv.hpp>
-
 
 namespace ob = ompl::base;
 namespace og = ompl::geometric;
 
 using namespace std;
-using namespace cv;
 
-
-// bool replanCondition;
+#define BS_TO_OMPL 0.1
+#define OMPL_TO_BS 10
+#define HALF_FIELD_MAXX 4000
+#define HALF_FIELD_MAXY 3000
+#define HALF_FIELD_MAXX_OMPL HALF_FIELD_MAXX*BS_TO_OMPL
+#define HALF_FIELD_MAXY_OMPL HALF_FIELD_MAXY*BS_TO_OMPL
+#define radius 150*BS_TO_OMPL
 
 template<typename T>
 boost::shared_ptr<T> make_shared_ptr(std::shared_ptr<T>& ptr)
@@ -50,44 +53,18 @@ std::shared_ptr<T> make_shared_ptr(boost::shared_ptr<T>& ptr)
     return std::shared_ptr<T>(ptr.get(), [ptr](T*) mutable {ptr.reset();});
 }
 
-typedef struct 
-{
-  double x;
-  double y;
-}point;
-
-typedef struct 
-{
-  double stepSize;
-  double maxIteration;
-  double biasParam;
-  int planner_selector;
-}gui_msg;
-
-typedef struct {
-  double xrange[2];
-  double yrange[2];
-} RANGE;
-
-typedef struct
-{
-    double x;
-    double y;
-}pos;
-
 class Planning{
   public:
-    Planning(std::vector<pos> &v,int n, gui_msg gui_msgs);
-    void init(std::vector<pos> &v,int n, gui_msg gui_msgs);
-    void CreateCircle();
-    //void PlannerSelector();
+    Planning(std::vector<krssg_ssl_msgs::point_2d> &v,int n, krssg_ssl_msgs::point_SF gui_msgs);
+    void init(std::vector<krssg_ssl_msgs::point_2d> &v,int n, krssg_ssl_msgs::point_SF gui_msgs);
+  
     bool isStateValid(const ob::State *state) const;
     void planWithSimpleSetup();
     void drawPath();
     void output();
     void planSimple();
-    bool plan(unsigned int start_row, unsigned int start_col, unsigned int goal_row, unsigned int goal_col);
-    vector<point> recordSolution();
+    bool plan(int start_row, int start_col, int goal_row, int goal_col);
+    vector<krssg_ssl_msgs::point_2d> recordSolution();
     bool isStateValid1(const ob::State *state);
     void drw();
 
