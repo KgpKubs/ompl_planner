@@ -7,7 +7,7 @@
 #include <boost/make_shared.hpp>
 
 #define radius 10
-
+int windowSize = 50;  //even for simplifyPoint Function
 using namespace cv;
 using namespace std;
 namespace ob = ompl::base;
@@ -17,12 +17,76 @@ namespace og = ompl::geometric;
 Mat img(800,800,CV_8UC3,Scalar(0,255,0));
 
 std::vector<point> vect,vect1;
-
+std::vector<point> publishingPoint;
 Planning::Planning(vector<pos> &v,int n, gui_msg gui_msgs){
   init(v,n,gui_msgs);
   //CreateCircle();
 }
 
+void simplifyPoint(std::vector<point>& v){
+  std::vector<point> newPoints;
+  for (int i = 0; i < windowSize/2; ++i)
+  {
+    newPoints.push_back(v[i]);
+  }
+  for (int i = windowSize/2; i < v.size() - windowSize/2; ++i)
+  {
+    float X = 0;
+    float Y = 0;
+    for (int j = i - windowSize/2; j <= i + windowSize/2; ++j)
+    {
+      X += v[j].x;
+      Y += v[j].y;
+    }
+    point p;
+    p.x = X/(windowSize + 1);
+    p.y = Y/(windowSize + 1);
+    newPoints.push_back(p);
+  }
+  float deltaX = (newPoints[windowSize/2].x - newPoints[0].x)*2/windowSize;
+  float deltaY = (newPoints[windowSize/2].y - newPoints[0].y)*2/windowSize;
+  for (int i = 0; i < windowSize/2; ++i)
+  {
+    newPoints[i].x = newPoints[0].x + i*deltaX;
+    newPoints[i].y = newPoints[0].y + i*deltaY;
+  }
+  deltaY = (v[v.size() - 1].y - newPoints[v.size() - windowSize/2 - 1].y)*2/windowSize;
+  deltaX = (v[v.size() - 1].x - newPoints[v.size() - windowSize/2 - 1].x)*2/windowSize;
+  for (int i = 0; i < windowSize/2; ++i)
+  {
+    point p;
+    p.x = newPoints[v.size() - windowSize/2 - 1].x + (i+1)*deltaX;
+    p.y = newPoints[v.size() - windowSize/2 - 1].y + (i+1)*deltaY; 
+    newPoints.push_back(p);
+  }
+  v = newPoints;
+}
+
+void simplifyWindow(vector<point> & v){
+  std::vector<point> newPoints;
+  cout<<v.size()<<endl;
+  for (int i = 0; i <= v.size(); i += windowSize)
+  {
+    int lastPtr = i + windowSize - 1;
+    if (lastPtr > v.size() - 1)
+    {
+      lastPtr = v.size() - 1;
+    }
+    int currentWindowSize = lastPtr - i + 1;
+    float deltaX = (v[lastPtr].x - v[i].x)/currentWindowSize;
+    float deltaY = (v[lastPtr].y - v[i].y)/currentWindowSize;
+    for (int j = i; j <= lastPtr; j++)
+    {
+      point p;
+      p.x = v[i].x + (j - i + 1)*deltaX;
+      p.y = v[i].y + (j - i + 1)*deltaY;
+      newPoints.push_back(p);
+    }
+    cout<<"---";
+  }
+  v = newPoints;
+  cout<<v.size()<<endl;
+}
 
 void Planning::init(vector<pos> &v,int n, gui_msg gui_msgs)
 {
@@ -161,8 +225,21 @@ vector<point> Planning::recordSolution(){
     s.x=w;
     s.y=h;
     vect1.push_back(s);
-    cout<<s.x<<" "<<s.y<<" ";
+    // cout<<s.x<<" "<<s.y<<" ";
   }
+  // cout<<"\n\n\n\n\n\n";
+  // for (int i = 0; i < vect1.size(); ++i)
+  // {
+  //   cout<<"("<<vect1[i].x<<","<<vect1[i].y<<"),";
+  // }
+
+  simplifyPoint(vect1);
+  // cout<<"\n\n\n\n\n\n";
+  // for (int i = 0; i < vect1.size(); ++i)
+  // {
+  //   cout<<"("<<vect1[i].x<<","<<vect1[i].y<<"),";
+  // }
+
   cout<<endl;
   // cout<<" size of vect1 = "<<vect1.size()<<endl;
   return vect1;

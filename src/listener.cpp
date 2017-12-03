@@ -11,7 +11,7 @@
 using namespace std;
 // using namespace cv;
 int count_=0;
-
+bool replanCondition;
 // ########################### Debug
 // time_t t;
 struct timeval t;
@@ -35,9 +35,29 @@ void Callback_gui(const krssg_ssl_msgs::point_SF::ConstPtr& msg)
   gui_msgs.planner_selector = msg->max_iteration;;
 }
 
+bool shouldReplan(){
+  int botid = 0;
+  float startDeviationThres = 100;
+  float endDeviationThres = 100;
+  replanCondition = 0;
+  cout<<path_points.size()<<endl;
+  if (path_points.size())
+  {
+    float distance = sqrt(pow(path_points[0].x - v[botid].x,2) + pow(path_points[0].y - v[botid].y,2));
+    if (distance > startDeviationThres)
+    {
+      replanCondition = 1;
+    }
+  }
+  else{
+    replanCondition = 1;
+  }
+  cout<<replanCondition<<endl;
+  return replanCondition;
+  // TODO---->Complete Function
+}
 void Callback(const krssg_ssl_msgs::BeliefState::ConstPtr& msg)
 {
-  // time(&t);
   gettimeofday(&t,NULL);
   currT = (long long)(t.tv_sec)*1000 + (long long)(t.tv_usec)/1000;
   pos p;
@@ -45,11 +65,8 @@ void Callback(const krssg_ssl_msgs::BeliefState::ConstPtr& msg)
 
   v.clear();
   for(int i=0;i<msg->homePos.size();i++){
-  	// p.x=fabs(msg->homePos[i].x+3300)/8.0;
-    // p.y=fabs(msg->homePos[i].y+2200)/8.0;
     p.x=fabs(msg->homePos[i].x+4000)*13.0/160.0;
     p.y=fabs(msg->homePos[i].y+3000)*3.0/40.0;
-  	//cout<<p.x<<" "<<p.y<<endl;
   	v.push_back(p);
   }
 
@@ -59,11 +76,9 @@ void Callback(const krssg_ssl_msgs::BeliefState::ConstPtr& msg)
   	v.push_back(p);
   }
 
+  if (shouldReplan() == 1)
+  {
   Planning planning(v,v.size(), gui_msgs);
-  // planning.planWithSimpleSetup();
-  // planning.drawPath();
-  // planning.output();
-
   planning.planSimple();
 
 
@@ -73,28 +88,21 @@ void Callback(const krssg_ssl_msgs::BeliefState::ConstPtr& msg)
 
   float scaledEndX = (endX + 4000)*13.0/160;
   float scaledEndY = (endY + 3000)*3.0/40;
-
-
-
-
   planning.plan(v[0].x, v[0].y, scaledEndX, scaledEndY);
-  // planning.plan(v[0].x, v[0].y, 600, 500);
   path_points = planning.recordSolution();
-  // planning.drw();
   points.point_array.clear();
    for(int i=0;i<path_points.size();i++)
     {
       point_.x=path_points[i].x;
       point_.y=path_points[i].y;
-      // point_.x=path_points[i].x*600/800;
-      // point_.y=path_points[i].y*400/500;
       points.point_array.push_back(point_);
     }   
-
-  pub.publish(points); 
+  // int shouldReplan = 1;
+  
+    pub.publish(points); 
+  }
   gettimeofday(&t,NULL);
   currT = (long long)(t.tv_sec)*1000 + (long long)(t.tv_usec)/1000;
-  // time(&t);
 
 }
 

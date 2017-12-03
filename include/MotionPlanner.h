@@ -35,6 +35,9 @@ namespace og = ompl::geometric;
 using namespace std;
 using namespace cv;
 
+
+// bool replanCondition;
+
 template<typename T>
 boost::shared_ptr<T> make_shared_ptr(std::shared_ptr<T>& ptr)
 {
