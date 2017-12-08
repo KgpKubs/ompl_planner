@@ -1,3 +1,12 @@
+/**
+ * @file listener.cpp
+ * @brief Communication Module for planner.
+ * 
+ * Node Name :- /listener
+ * Suscribed to :- /beliefstate, /gui_params
+ * Publish to :- /path_planner_ompl
+ */
+
 #include "ros/ros.h"
 #include "std_msgs/String.h"
 #include "krssg_ssl_msgs/BeliefState.h"
@@ -9,14 +18,10 @@
 #include <bits/stdc++.h>
 #include <time.h>
 using namespace std;
-// using namespace cv;
 int count_=0;
 bool replanCondition;
-// ########################### Debug
-// time_t t;
 struct timeval t;
 long long int currT;
-// ##########################
 
 std::vector<krssg_ssl_msgs::point_2d> path_points;
 std::vector<krssg_ssl_msgs::point_2d> v;
@@ -25,24 +30,35 @@ krssg_ssl_msgs::point_2d point_, initial_p, final_p;
 ros::Publisher pub;
 krssg_ssl_msgs::point_SF gui_msgs;
 
-// std::vector<point> path_points;
-// std::vector<pos> v;
 std::vector<krssg_ssl_msgs::point_2d> awayVel;
 std::vector<krssg_ssl_msgs::point_2d> homeVel;
-// krssg_ssl_msgs::planner_path points;
-// krssg_ssl_msgs::point_2d point_;
-// ros::Publisher pub;
-// krssg_ssl_msgs::point_SF gui_msgs;
 
+/**
+ * @brief      Callback for gui msgs
+ *
+ * @param[in]  msg   msg from /gui_params
+ * 
+ * Step Size
+ * Max_Iteration
+ * Bias_Param
+ */
 void Callback_gui(const krssg_ssl_msgs::point_SF::ConstPtr& msg)
 {
-  // cout<<" in Callback_gui , planner_selector = "<<msg->max_iteration<<endl;
+  // TODO
+  // Link Gui with planner completely
   gui_msgs.step_size = msg->step_size;
   gui_msgs.max_iteration = msg->max_iteration;
   gui_msgs.bias_param = msg->bias_param;
-  // gui_msgs.planner_selector = msg->max_iteration;;
 }
 
+
+/**
+ * @brief      Replan Path
+ *
+ * @param[in]  awayBotSize  Number of opponent Bots
+ *
+ * @return     True if replanning is needed, False otherwise
+ */
 bool shouldReplan(int awayBotSize){
   int botid = 0;
   float startDeviationThres = 100;
@@ -50,11 +66,9 @@ bool shouldReplan(int awayBotSize){
   float velThresh = 50;
   float angleThres = 0.1;
   replanCondition = 0;
-  // cout<<path_points.size()<<endl;
   if (path_points.size())
   {
     float distance = sqrt(pow(path_points[0].x - v[botid].x,2) + pow(path_points[0].y - v[botid].y,2));
-    // cout<<"------------"<<distance<<endl;
     float velMagnitude = sqrt(pow(homeVel[botid].x,2) + pow(homeVel[botid].y,2));
     if (distance > startDeviationThres && velMagnitude < velThresh)
     {
@@ -63,7 +77,6 @@ bool shouldReplan(int awayBotSize){
   }
   else{
     replanCondition = 1;
-    // cout<<replanCondition<<endl;
   }
   for (int i = 0; i < awayBotSize; ++i)
   {
@@ -76,22 +89,29 @@ bool shouldReplan(int awayBotSize){
     }
   }
 
-// TESTING
-  // replanCondition = 0;
   return replanCondition;
-  // TODO---->Complete Function
 }
+
+/**
+ * @brief      BeliefState Callback
+ *
+ * @param[in]  msg   msg from /belief_state
+ * 
+ * Subscribe to BeliefState, Get start and end points and plan 
+ * path accordingly
+ *  
+ * @see Planning
+ * @see Planning::planSimple()
+ * @see Planning::plan()
+ * @see Planning::recordSolution()
+ */
 void Callback(const krssg_ssl_msgs::BeliefState::ConstPtr& msg)
 {
-  gettimeofday(&t,NULL);
-  currT = (long long)(t.tv_sec)*1000 + (long long)(t.tv_usec)/1000;
   krssg_ssl_msgs::point_2d p;
   count_++;
   krssg_ssl_msgs::point_2d vel;
   v.clear();
   for(int i=0;i<msg->homePos.size();i++){
-    // p.x=fabs(msg->homePos[i].x+4000)*13.0/160.0;
-    // p.y=fabs(msg->homePos[i].y+3000)*3.0/40.0;
     p.x = msg->homePos[i].x*BS_TO_OMPL;
     p.y = msg->homePos[i].y*BS_TO_OMPL;
   	v.push_back(p);
@@ -101,8 +121,6 @@ void Callback(const krssg_ssl_msgs::BeliefState::ConstPtr& msg)
   }
 
   for(int i=0;i<msg->awayPos.size();i++){
-  	// p.x=fabs(msg->awayPos[i].x+4000)*13.0/160.0;
-  	// p.y=fabs(msg->awayPos[i].y+3000)*3.0/40.0;
     p.x = msg->awayPos[i].x*BS_TO_OMPL;
     p.y = msg->awayPos[i].y*BS_TO_OMPL;
   	v.push_back(p);
@@ -113,11 +131,6 @@ void Callback(const krssg_ssl_msgs::BeliefState::ConstPtr& msg)
 
   float endX = 2000;
   float endY = 1000;
-
-  // if (shouldReplan(msg->awayPos.size()))
-  // {
-    
-    // points.point_array.clear();
 
     if (points.point_array.size() == 0)
     {
@@ -135,12 +148,7 @@ void Callback(const krssg_ssl_msgs::BeliefState::ConstPtr& msg)
       cout<<"Publishing"<<endl;
     }
        
-  // int shouldReplan = 1;
-
     pub.publish(points); 
-  // }
-  gettimeofday(&t,NULL);
-  currT = (long long)(t.tv_sec)*1000 + (long long)(t.tv_usec)/1000;
 }
 
 
