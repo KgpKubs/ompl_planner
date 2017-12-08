@@ -22,8 +22,8 @@ std::vector<krssg_ssl_msgs::point_2d> vect,vect1;
 /**
  * \brief Describing Length of Window used for Smooth Path
  */
-int windowSize;
-windowSize = 50;  
+int windowSize = 50;
+// windowSize = 50;  
 
 std::vector<krssg_ssl_msgs::point_2d> publishingPoint;
 
@@ -113,7 +113,7 @@ void simplifyWindow(vector<krssg_ssl_msgs::point_2d> & v){
 void Planning::init(vector<krssg_ssl_msgs::point_2d> &v,int n, krssg_ssl_msgs::point_SF gui_msgs)
 {
 
-  stepSize=gui_msgs.step_size;
+  // stepSize=gui_msgs.step_size;
   // Boundaries of the space
   xLeft=-HALF_FIELD_MAXX_OMPL;
   xRight=HALF_FIELD_MAXX_OMPL;
@@ -133,20 +133,6 @@ void Planning::init(vector<krssg_ssl_msgs::point_2d> &v,int n, krssg_ssl_msgs::p
 
 }
 
-
-
-bool Planning::isStateValid1(const ob::State *state){
-  const ob::SE2StateSpace::StateType *state_2d= state->as<ob::SE2StateSpace::StateType>();
-  const double &x(state_2d->getX()), &y(state_2d->getY());
-
-  for (int i = 0; i < numObstacles; ++i){
-    if (sqrt(pow((xc[i]-x),2)+pow((yc[i]-y),2))<=radius){
-      return false;
-    }
-  }
-
-  return true;
-}
 
 
 

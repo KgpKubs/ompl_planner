@@ -13,6 +13,7 @@
 #include "krssg_ssl_msgs/planner_path.h"
 #include "krssg_ssl_msgs/point_2d.h"
 #include "krssg_ssl_msgs/point_SF.h"
+#include "krssg_ssl_msgs/path_plan.h"
 #include <iostream>
 #include "MotionPlanner.h"
 #include <bits/stdc++.h>
@@ -23,10 +24,10 @@ bool replanCondition;
 struct timeval t;
 long long int currT;
 
-std::vector<krssg_ssl_msgs::point_2d> path_points;
+// std::vector<krssg_ssl_msgs::point_2d> path_points;
 std::vector<krssg_ssl_msgs::point_2d> v;
-krssg_ssl_msgs::planner_path points;
-krssg_ssl_msgs::point_2d point_, initial_p, final_p;
+// krssg_ssl_msgs::planner_path points;
+// krssg_ssl_msgs::point_2d point_, initial_p, final_p;
 ros::Publisher pub;
 krssg_ssl_msgs::point_SF gui_msgs;
 
@@ -59,38 +60,38 @@ void Callback_gui(const krssg_ssl_msgs::point_SF::ConstPtr& msg)
  *
  * @return     True if replanning is needed, False otherwise
  */
-bool shouldReplan(int awayBotSize){
-  int botid = 0;
-  float startDeviationThres = 100;
-  float endDeviationThres = 100;
-  float velThresh = 50;
-  float angleThres = 0.1;
-  replanCondition = 0;
-  if (path_points.size())
-  {
-    float distance = sqrt(pow(path_points[0].x - v[botid].x,2) + pow(path_points[0].y - v[botid].y,2));
-    float velMagnitude = sqrt(pow(homeVel[botid].x,2) + pow(homeVel[botid].y,2));
-    if (distance > startDeviationThres && velMagnitude < velThresh)
-    {
-      replanCondition = 1;
-    }
-  }
-  else{
-    replanCondition = 1;
-  }
-  for (int i = 0; i < awayBotSize; ++i)
-  {
-    float alignAngle = atan2(v[botid].y - v[awayBotSize + i].y,v[botid].x - v[awayBotSize + i].x);
-    float awayMoveAngle = atan2(awayVel[i].y,awayVel[i].x);
-    float angleDiff = abs(alignAngle - awayMoveAngle);
-    if (angleDiff < angleThres)
-    {
-      replanCondition = 1;
-    }
-  }
+// bool shouldReplan(int awayBotSize){
+//   int botid = 0;
+//   float startDeviationThres = 100;
+//   float endDeviationThres = 100;
+//   float velThresh = 50;
+//   float angleThres = 0.1;
+//   replanCondition = 0;
+//   if (path_points.size())
+//   {
+//     float distance = sqrt(pow(path_points[0].x - v[botid].x,2) + pow(path_points[0].y - v[botid].y,2));
+//     float velMagnitude = sqrt(pow(homeVel[botid].x,2) + pow(homeVel[botid].y,2));
+//     if (distance > startDeviationThres && velMagnitude < velThresh)
+//     {
+//       replanCondition = 1;
+//     }
+//   }
+//   else{
+//     replanCondition = 1;
+//   }
+//   for (int i = 0; i < awayBotSize; ++i)
+//   {
+//     float alignAngle = atan2(v[botid].y - v[awayBotSize + i].y,v[botid].x - v[awayBotSize + i].x);
+//     float awayMoveAngle = atan2(awayVel[i].y,awayVel[i].x);
+//     float angleDiff = abs(alignAngle - awayMoveAngle);
+//     if (angleDiff < angleThres)
+//     {
+//       replanCondition = 1;
+//     }
+//   }
 
-  return replanCondition;
-}
+//   return replanCondition;
+// }
 
 /**
  * @brief      BeliefState Callback
@@ -128,36 +129,45 @@ void Callback(const krssg_ssl_msgs::BeliefState::ConstPtr& msg)
     vel.y = msg->awayVel[i].y;
     awayVel.push_back(vel);
   }
-
-  float endX = 2000;
-  float endY = 1000;
-
-    if (points.point_array.size() == 0)
-    {
-      cout<<"Replanning "<<endl;
-      Planning planning(v,v.size(), gui_msgs);
-      planning.planSimple();
-      planning.plan(v[0].x,v[0].y,endX*BS_TO_OMPL, endY*BS_TO_OMPL);
-      path_points = planning.recordSolution();
-      for(int i=0;i<path_points.size();i++)
-      {
-       point_.x=path_points[i].x*OMPL_TO_BS;
-       point_.y=path_points[i].y*OMPL_TO_BS;
-       points.point_array.push_back(point_);
-      }
-      cout<<"Publishing"<<endl;
-    }
-       
-    pub.publish(points); 
 }
 
-
+bool path(krssg_ssl_msgs::path_plan::Request &req,
+          krssg_ssl_msgs::path_plan::Response &res){
+  krssg_ssl_msgs::point_2d start;
+  krssg_ssl_msgs::point_2d target;
+  krssg_ssl_msgs::point_2d point;
+  krssg_ssl_msgs::planner_path points;
+  start.x = req.start.x;
+  start.y = req.start.y;
+  target.x = req.target.x;
+  target.y = req.target.y;
+  ROS_INFO("Start (%f %f)  target (%f %f) ",start.x,start.y,target.x,target.y);
+  ROS_INFO("Planning");
+  Planning planning(v,v.size(),gui_msgs);
+  planning.planSimple();
+  planning.plan(start.x*BS_TO_OMPL,start.y*BS_TO_OMPL,
+                target.x*BS_TO_OMPL,target.y*BS_TO_OMPL);
+  std::vector<krssg_ssl_msgs::point_2d> path_points;
+  path_points = planning.recordSolution();
+  for (int i = 0; i < path_points.size(); ++i)
+  {
+    point.x = path_points[i].x*OMPL_TO_BS;
+    point.y = path_points[i].y*OMPL_TO_BS;
+    res.path.push_back(point);
+    points.point_array.push_back(point);
+  }
+  pub.publish(points);
+  ROS_INFO("Sending Response");
+  ROS_INFO("Publishing Points on publisher");
+  return true;
+}
 int main(int argc, char **argv)
 {
   ros::init(argc, argv, "listener");
   ros::NodeHandle n;
   ros::Subscriber sub = n.subscribe("/belief_state", 1000, Callback);
   ros::Subscriber sub1 = n.subscribe("/gui_params", 1000, Callback_gui);
+  ros::ServiceServer service = n.advertiseService("planner", path);
   pub = n.advertise<krssg_ssl_msgs::planner_path>("/path_planner_ompl", 1000);
   ros::spin();
   return 0;
