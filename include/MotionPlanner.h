@@ -113,7 +113,6 @@ class Planning{
 
     int maxWidth_;
     int maxHeight_;
-    og::SimpleSetupPtr ss_;
-
+    boost::shared_ptr<og::SimpleSetup> ss_;
 };
 #endif
