@@ -44,7 +44,7 @@ using namespace std;
 #define HALF_FIELD_MAXY 3000
 #define HALF_FIELD_MAXX_OMPL HALF_FIELD_MAXX*BS_TO_OMPL
 #define HALF_FIELD_MAXY_OMPL HALF_FIELD_MAXY*BS_TO_OMPL
-#define radius 300*BS_TO_OMPL
+#define radius 120*BS_TO_OMPL
 
 template<typename T>
 boost::shared_ptr<T> make_shared_ptr(std::shared_ptr<T>& ptr)
@@ -121,7 +121,7 @@ class Planning{
     double* xc;
     double* yc;
     double* r;
-
+    double xstart, ystart;
     /**
      * Number of obstacles in space
      */

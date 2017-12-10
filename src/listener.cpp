@@ -52,47 +52,6 @@ void Callback_gui(const krssg_ssl_msgs::point_SF::ConstPtr& msg)
   gui_msgs.bias_param = msg->bias_param;
 }
 
-
-/**
- * @brief      Replan Path
- *
- * @param[in]  awayBotSize  Number of opponent Bots
- *
- * @return     True if replanning is needed, False otherwise
- */
-// bool shouldReplan(int awayBotSize){
-//   int botid = 0;
-//   float startDeviationThres = 100;
-//   float endDeviationThres = 100;
-//   float velThresh = 50;
-//   float angleThres = 0.1;
-//   replanCondition = 0;
-//   if (path_points.size())
-//   {
-//     float distance = sqrt(pow(path_points[0].x - v[botid].x,2) + pow(path_points[0].y - v[botid].y,2));
-//     float velMagnitude = sqrt(pow(homeVel[botid].x,2) + pow(homeVel[botid].y,2));
-//     if (distance > startDeviationThres && velMagnitude < velThresh)
-//     {
-//       replanCondition = 1;
-//     }
-//   }
-//   else{
-//     replanCondition = 1;
-//   }
-//   for (int i = 0; i < awayBotSize; ++i)
-//   {
-//     float alignAngle = atan2(v[botid].y - v[awayBotSize + i].y,v[botid].x - v[awayBotSize + i].x);
-//     float awayMoveAngle = atan2(awayVel[i].y,awayVel[i].x);
-//     float angleDiff = abs(alignAngle - awayMoveAngle);
-//     if (angleDiff < angleThres)
-//     {
-//       replanCondition = 1;
-//     }
-//   }
-
-//   return replanCondition;
-// }
-
 /**
  * @brief      BeliefState Callback
  *
@@ -108,6 +67,7 @@ void Callback_gui(const krssg_ssl_msgs::point_SF::ConstPtr& msg)
  */
 void Callback(const krssg_ssl_msgs::BeliefState::ConstPtr& msg)
 {
+  // cout<<"in beliefstate Callback function \n\n";
   krssg_ssl_msgs::point_2d p;
   count_++;
   krssg_ssl_msgs::point_2d vel;
@@ -116,18 +76,18 @@ void Callback(const krssg_ssl_msgs::BeliefState::ConstPtr& msg)
     p.x = msg->homePos[i].x*BS_TO_OMPL;
     p.y = msg->homePos[i].y*BS_TO_OMPL;
   	v.push_back(p);
-    vel.x = msg->homeVel[i].x;
-    vel.y = msg->homeVel[i].y;
-    homeVel.push_back(vel);
+    // vel.x = msg->homeVel[i].x;
+    // vel.y = msg->homeVel[i].y;
+    // homeVel.push_back(vel);
   }
 
   for(int i=0;i<msg->awayPos.size();i++){
     p.x = msg->awayPos[i].x*BS_TO_OMPL;
     p.y = msg->awayPos[i].y*BS_TO_OMPL;
   	v.push_back(p);
-    vel.x = msg->awayVel[i].x;
-    vel.y = msg->awayVel[i].y;
-    awayVel.push_back(vel);
+    // vel.x = msg->awayVel[i].x;
+    // vel.y = msg->awayVel[i].y;
+    // awayVel.push_back(vel);
   }
 }
 

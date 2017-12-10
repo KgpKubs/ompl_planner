@@ -44,6 +44,8 @@ Planning::Planning(vector<krssg_ssl_msgs::point_2d> &v,int n, krssg_ssl_msgs::po
  */
 void simplifyPoint(std::vector<krssg_ssl_msgs::point_2d>& v){
   std::vector<krssg_ssl_msgs::point_2d> newPoints;
+
+  windowSize = windowSize/2 > v.size()?v.size():windowSize;
   for (int i = 0; i < windowSize/2; ++i)
   {
     newPoints.push_back(v[i]);
@@ -142,6 +144,8 @@ bool Planning::plan(int start_row, int start_col, int goal_row, int goal_col){
 
   ob::ScopedState<> start(ss_->getStateSpace());
   start[0] = start_row;
+  xstart = start_row;
+  ystart = start_col;
   start[1] = start_col;
   ob::ScopedState<> goal(ss_->getStateSpace());
   goal[0] = goal_row;
@@ -197,6 +201,7 @@ bool Planning::plan(int start_row, int start_col, int goal_row, int goal_col){
 
 vector<krssg_ssl_msgs::point_2d> Planning::recordSolution(){
   vect1.clear();
+  cout<<"recordSolution start\n";
   if (!ss_ || !ss_->haveSolutionPath())
     {
       vect1.clear();
@@ -213,13 +218,18 @@ vector<krssg_ssl_msgs::point_2d> Planning::recordSolution(){
     s.y=h;
     vect1.push_back(s);
   }
+  cout<<"simplifyPoint start\n";
   simplifyPoint(vect1);
+  cout<<"func end here\n";
   return vect1;
 }
 
 bool Planning::isStateValid(const ob::State *state) const {
+
   const int w = std::min((int)state->as<ob::RealVectorStateSpace::StateType>()->values[0], maxWidth_);
   const int h = std::min((int)state->as<ob::RealVectorStateSpace::StateType>()->values[1], maxHeight_);
+  if(sqrt(pow((xstart-w),2)+pow((ystart-h),2))<=radius)
+    return true;
   for (int i = 0; i < numObstacles; ++i){
     if (sqrt(pow((xc[i]-w),2)+pow((yc[i]-h),2))<=radius){
       return false;
