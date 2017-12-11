@@ -166,7 +166,7 @@ class Planning{
      * Ompl space ptr
      * @see planSimple()
      */
-    og::SimpleSetupPtr ss_;
 
+    boost::shared_ptr<og::SimpleSetup> ss_;
 };
 #endif
