@@ -24,10 +24,7 @@ bool replanCondition;
 struct timeval t;
 long long int currT;
 
-// std::vector<krssg_ssl_msgs::point_2d> path_points;
 std::vector<krssg_ssl_msgs::point_2d> v;
-// krssg_ssl_msgs::planner_path points;
-// krssg_ssl_msgs::point_2d point_, initial_p, final_p;
 ros::Publisher pub;
 krssg_ssl_msgs::point_SF gui_msgs;
 
@@ -57,17 +54,12 @@ void Callback_gui(const krssg_ssl_msgs::point_SF::ConstPtr& msg)
  *
  * @param[in]  msg   msg from /belief_state
  * 
- * Subscribe to BeliefState, Get start and end points and plan 
- * path accordingly
+ * Record position of kubs
  *  
- * @see Planning
- * @see Planning::planSimple()
- * @see Planning::plan()
- * @see Planning::recordSolution()
+ * 
  */
 void Callback(const krssg_ssl_msgs::BeliefState::ConstPtr& msg)
 {
-  // cout<<"in beliefstate Callback function \n\n";
   krssg_ssl_msgs::point_2d p;
   count_++;
   krssg_ssl_msgs::point_2d vel;
@@ -76,21 +68,26 @@ void Callback(const krssg_ssl_msgs::BeliefState::ConstPtr& msg)
     p.x = msg->homePos[i].x*BS_TO_OMPL;
     p.y = msg->homePos[i].y*BS_TO_OMPL;
   	v.push_back(p);
-    // vel.x = msg->homeVel[i].x;
-    // vel.y = msg->homeVel[i].y;
-    // homeVel.push_back(vel);
   }
 
   for(int i=0;i<msg->awayPos.size();i++){
     p.x = msg->awayPos[i].x*BS_TO_OMPL;
     p.y = msg->awayPos[i].y*BS_TO_OMPL;
   	v.push_back(p);
-    // vel.x = msg->awayVel[i].x;
-    // vel.y = msg->awayVel[i].y;
-    // awayVel.push_back(vel);
   }
 }
 
+/**
+ * @brief      Give path on request from client
+ * 
+ * Find path on request from server, publish same path to 'path_planner_ompl'
+ * for GUI
+ *
+ * @see Planning
+ * @see Planning::planSimple()
+ * @see Planning::plan()
+ * @see Planning::recordSolution()
+ */
 bool path(krssg_ssl_msgs::path_plan::Request &req,
           krssg_ssl_msgs::path_plan::Response &res){
   krssg_ssl_msgs::point_2d start;
