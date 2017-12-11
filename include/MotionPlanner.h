@@ -1,5 +1,15 @@
+/**
+ * \file MotionPlanner.h
+ * \brief Header File for Planner
+ */
+
 #ifndef _MOTION_PLANNER_H_
 #define _MOTION_PLANNER_H_
+
+#include "krssg_ssl_msgs/BeliefState.h"
+#include "krssg_ssl_msgs/planner_path.h"
+#include "krssg_ssl_msgs/point_2d.h"
+#include "krssg_ssl_msgs/point_SF.h"
 #include <ompl/geometric/SimpleSetup.h>
 
 #include <ompl/geometric/planners/prm/PRM.h>
@@ -20,20 +30,21 @@
 #include <ompl/base/PlannerData.h>
 #include <cmath>
 #include <iostream>
-#include <fstream>
 #include <ostream>
 #include <vector>
-
-#include <opencv2/core/core.hpp>
-#include <opencv2/highgui/highgui.hpp>
-#include <opencv2/opencv.hpp>
-
 
 namespace ob = ompl::base;
 namespace og = ompl::geometric;
 
 using namespace std;
-using namespace cv;
+
+#define BS_TO_OMPL 0.1
+#define OMPL_TO_BS 10
+#define HALF_FIELD_MAXX 4000
+#define HALF_FIELD_MAXY 3000
+#define HALF_FIELD_MAXX_OMPL HALF_FIELD_MAXX*BS_TO_OMPL
+#define HALF_FIELD_MAXY_OMPL HALF_FIELD_MAXY*BS_TO_OMPL
+#define radius 120*BS_TO_OMPL
 
 template<typename T>
 boost::shared_ptr<T> make_shared_ptr(std::shared_ptr<T>& ptr)
@@ -46,74 +57,116 @@ std::shared_ptr<T> make_shared_ptr(boost::shared_ptr<T>& ptr)
 {
     return std::shared_ptr<T>(ptr.get(), [ptr](T*) mutable {ptr.reset();});
 }
-
-typedef struct 
-{
-  double x;
-  double y;
-}point;
-
-typedef struct 
-{
-  double stepSize;
-  double maxIteration;
-  double biasParam;
-  int planner_selector;
-}gui_msg;
-
-typedef struct {
-  double xrange[2];
-  double yrange[2];
-} RANGE;
-
-typedef struct
-{
-    double x;
-    double y;
-}pos;
-
+/**
+ * @brief      Class for planning.
+ */
 class Planning{
   public:
-    Planning(std::vector<pos> &v,int n, gui_msg gui_msgs);
-    void init(std::vector<pos> &v,int n, gui_msg gui_msgs);
-    void CreateCircle();
-    //void PlannerSelector();
+    /**
+     * @brief      Constructor for planning class.
+     *
+     * @param      v         Position of all bots
+     * @param[in]  n         Total Number of Bots
+     * @param[in]  gui_msgs  msg from gui node
+     */
+    Planning(std::vector<krssg_ssl_msgs::point_2d> &v,int n, krssg_ssl_msgs::point_SF gui_msgs);
+    void init(std::vector<krssg_ssl_msgs::point_2d> &v,int n, krssg_ssl_msgs::point_SF gui_msgs);
+    
+    /**
+ * @brief      Determines if ompl state is valid.
+ *
+ * @param[in]  state  ompl state
+ *
+     *Check if obstacle is not on path
+ * @return     True if state valid 1, False otherwise.
+ */
     bool isStateValid(const ob::State *state) const;
-    void planWithSimpleSetup();
-    void drawPath();
-    void output();
+    // void planWithSimpleSetup();
+    // void drawPath();
+    // void output();
+
+/**
+ * @brief      Set Dimensions for ompl space
+ * 
+ * Boundaries of space
+ */
     void planSimple();
-    bool plan(unsigned int start_row, unsigned int start_col, unsigned int goal_row, unsigned int goal_col);
-    vector<point> recordSolution();
-    bool isStateValid1(const ob::State *state);
-    void drw();
+
+
+    /**
+ * @brief      Initialise ompl state with path.
+ *
+ * @param[in]  start_row  start point coordinate
+ * @param[in]  start_col  start point coordinate
+ * @param[in]  goal_row   end point coordinate
+ * @param[in]  goal_col   end point coordinate
+ *
+ *Find path from start point to end point.
+ *Simplify Path
+ *
+ * @return     return True if path is found
+ */
+    bool plan(int start_row, int start_col, int goal_row, int goal_col);
+/**
+ * @brief      Get vector of points on path 
+ *
+ *Path after Interpolation
+ *
+ * @return     Vector of points on path
+ */
+    vector<krssg_ssl_msgs::point_2d> recordSolution();
+    // bool isStateValid1(const ob::State *state);
 
   private:
     double* xc;
     double* yc;
     double* r;
-    // Number of obstacles in space.
+    double xstart, ystart;
+    /**
+     * Number of obstacles in space
+     */
+
     int numObstacles;
-    // Start position in space
-    double xStart;
-    double yStart;
-    // Goal position in space
-    double xGoal;
-    double yGoal;
-    // Max. distance toward each sampled position we
-    // should grow our tree
-    double stepSize;
-    // Boundaries of the space
+    /**
+     * @brief Left coordinate of space
+     */
     double xLeft;
+    /**
+     * @brief Right coordinate of space
+     * @see planSimple()
+     */
     double xRight;
+    /**
+     * @brief Top coordinate of space
+     * @see planSimple()
+     */
     double yTop;
+    /**
+     * @brief Bottom coordinate of space
+     * @see planSimple()
+     */
     double yBottom;
+    /**
+     * @brief Planner Selector
+     * @see planSimple()
+     */
     int selector;
 
-
+    /**
+     * @brief Width of space
+     */
     int maxWidth_;
+    /**
+     * @brief Height of space
+     * @see planSimple()
+     */
     int maxHeight_;
-    og::SimpleSetupPtr ss_;
 
+    /**
+     * Ompl space ptr
+     * @see planSimple()
+     */
+
+    boost::shared_ptr<og::SimpleSetup> ss_;
 };
 #endif
