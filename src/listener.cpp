@@ -24,13 +24,17 @@ bool replanCondition;
 struct timeval t;
 long long int currT;
 
+// std::vector<krssg_ssl_msgs::point_2d> path_points;
 std::vector<krssg_ssl_msgs::point_2d> v;
+// krssg_ssl_msgs::planner_path points;
+// krssg_ssl_msgs::point_2d point_, initial_p, final_p;
 ros::Publisher pub;
 krssg_ssl_msgs::point_SF gui_msgs;
 
 std::vector<krssg_ssl_msgs::point_2d> awayVel;
 std::vector<krssg_ssl_msgs::point_2d> homeVel;
 
+krssg_ssl_msgs::point_2d ballPos;
 /**
  * @brief      Callback for gui msgs
  *
@@ -54,40 +58,44 @@ void Callback_gui(const krssg_ssl_msgs::point_SF::ConstPtr& msg)
  *
  * @param[in]  msg   msg from /belief_state
  * 
- * Record position of kubs
+ * Subscribe to BeliefState, Get start and end points and plan 
+ * path accordingly
  *  
- * 
+ * @see Planning
+ * @see Planning::planSimple()
+ * @see Planning::plan()
+ * @see Planning::recordSolution()
  */
 void Callback(const krssg_ssl_msgs::BeliefState::ConstPtr& msg)
 {
+  // cout<<"in beliefstate Callback function \n\n";
   krssg_ssl_msgs::point_2d p;
   count_++;
   krssg_ssl_msgs::point_2d vel;
   v.clear();
+
+  ballPos.x = msg->ballPos.x*BS_TO_OMPL;
+  ballPos.y = msg->ballPos.y*BS_TO_OMPL;
+  
   for(int i=0;i<msg->homePos.size();i++){
     p.x = msg->homePos[i].x*BS_TO_OMPL;
     p.y = msg->homePos[i].y*BS_TO_OMPL;
   	v.push_back(p);
+    // vel.x = msg->homeVel[i].x;
+    // vel.y = msg->homeVel[i].y;
+    // homeVel.push_back(vel);
   }
 
   for(int i=0;i<msg->awayPos.size();i++){
     p.x = msg->awayPos[i].x*BS_TO_OMPL;
     p.y = msg->awayPos[i].y*BS_TO_OMPL;
   	v.push_back(p);
+    // vel.x = msg->awayVel[i].x;
+    // vel.y = msg->awayVel[i].y;
+    // awayVel.push_back(vel);
   }
 }
 
-/**
- * @brief      Give path on request from client
- * 
- * Find path on request from server, publish same path to 'path_planner_ompl'
- * for GUI
- *
- * @see Planning
- * @see Planning::planSimple()
- * @see Planning::plan()
- * @see Planning::recordSolution()
- */
 bool path(krssg_ssl_msgs::path_plan::Request &req,
           krssg_ssl_msgs::path_plan::Response &res){
   krssg_ssl_msgs::point_2d start;
@@ -98,8 +106,18 @@ bool path(krssg_ssl_msgs::path_plan::Request &req,
   start.y = req.start.y;
   target.x = req.target.x;
   target.y = req.target.y;
+  
+
   ROS_INFO("Start (%f %f)  target (%f %f) ",start.x,start.y,target.x,target.y);
   ROS_INFO("Planning");
+
+
+  bool avoid_ball = req.avoid_ball;
+  ROS_INFO("avoid_ball %d",avoid_ball);
+  if (avoid_ball)
+    v.push_back(ballPos);
+
+
   Planning planning(v,v.size(),gui_msgs);
   planning.planSimple();
   planning.plan(start.x*BS_TO_OMPL,start.y*BS_TO_OMPL,
