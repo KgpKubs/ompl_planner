@@ -91,6 +91,14 @@ void Callback(const krssg_ssl_msgs::BeliefState::ConstPtr& msg)
   }
 }
 
+float distance_(float x1, float y1, float x2, float y2)
+{
+  float dx = x1 - x2;
+  float dy = y1 - y2;
+
+  return sqrt(dx*dx + dy*dy);
+}
+
 bool path(krssg_ssl_msgs::path_plan::Request &req,
           krssg_ssl_msgs::path_plan::Response &res){
   krssg_ssl_msgs::point_2d start;
@@ -102,6 +110,7 @@ bool path(krssg_ssl_msgs::path_plan::Request &req,
   target.x = req.target.x;
   target.y = req.target.y;
   ROS_INFO("Start (%f %f)  target (%f %f) ",start.x,start.y,target.x,target.y);
+  ROS_INFO("Distance = %f, threshold = %f",distance_(start.x, start.y, target.x, target.y)*BS_TO_OMPL, radius);
   ROS_INFO("Planning");
   Planning planning(v,v.size(),gui_msgs);
   planning.planSimple();
